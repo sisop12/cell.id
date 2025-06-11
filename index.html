@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="lv">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Mobilo torņu meklēšana</title>
+  <link rel="manifest" href="manifest.json">
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <link rel="icon" href="icon.png" />
+  <style>
+    :root { color-scheme: dark; }
+    body {
+      background-color: #111b21;
+      color: #e9edef;
+      font-family: "Segoe UI", sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+    .header {
+      background-color: #202c33;
+      padding: 16px;
+      font-size: 20px;
+      font-weight: bold;
+      color: #25d366;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.4);
+    }
+    .container {
+      padding: 20px;
+      max-width: 600px;
+      margin: auto;
+    }
+    label {
+      display: block;
+      margin-top: 12px;
+      font-size: 14px;
+      color: #8696a0;
+    }
+    input, select {
+      width: 100%;
+      padding: 10px;
+      margin-top: 4px;
+      border: none;
+      border-radius: 6px;
+      background-color: #2a3942;
+      color: #e9edef;
+      font-size: 14px;
+    }
+    button {
+      width: 100%;
+      margin-top: 20px;
+      padding: 12px;
+      background-color: #25d366;
+      color: #111b21;
+      font-size: 16px;
+      font-weight: bold;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+    }
+    button:hover { background-color: #20ba5a; }
+    #result { margin-top: 16px; white-space: pre-wrap; color: #d1f9d1; }
+    #map { height: 400px; margin-top: 16px; display: none; border-radius: 10px; overflow: hidden; }
+    .leaflet-control-attribution {
+      background-color: rgba(17, 27, 33, 0.7);
+      color: #ccc;
+    }
+  </style>
+</head>
+<body>
+  <div class="header">Mobilo torņu meklēšana</div>
+  <div class="container">
+    <label for="radio">Radio tips:</label>
+    <select id="radio">
+      <option value="gsm">GSM</option>
+      <option value="wcdma">3G (WCDMA)</option>
+      <option value="lte" selected>4G (LTE)</option>
+      <option value="nr">5G (NR)</option>
+    </select>
+
+    <label for="mcc">MCC (Valsts kods):</label>
+    <input type="number" id="mcc" placeholder="piem. 247" />
+
+    <label for="mnc">MNC (Operatora kods):</label>
+    <input type="number" id="mnc" placeholder="piem. 1" />
+
+    <label for="lac">LAC / TAC (zona):</label>
+    <input type="number" id="lac" placeholder="piem. 30150" />
+
+    <label for="cellid">Cell ID (Tornis):</label>
+    <input type="number" id="cellid" placeholder="piem. 15883" />
+
+    <button onclick="getLocation()">Atrast torni</button>
+
+    <div id="result"></div>
+    <div id="map"></div>
+  </div>
+
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <script>
+    let map, marker, circle, arrow;
+
+    async function getLocation() {
+      const radio = document.getElementById("radio").value;
+      const mcc = parseInt(document.getElementById("mcc").value);
+      const mnc = parseInt(document.getElementById("mnc").value);
+      const lac = parseInt(document.getElementById("lac").value);
+      const cellId = parseInt(document.getElementById("cellid").value);
+
+      document.getElementById("result").innerText = "Notiek meklēšana...";
+      document.getElementById("map").style.display = "none";
+
+      const body = {
+        token: "pk.e9e6d27f6abeff2c49da29fa3b871378",
+        radio: radio,
+        mcc: mcc,
+        mnc: mnc,
+        cells: [{ lac: lac, cid: cellId }],
+        address: 1
+      };
+
+      try {
+        const res = await fetch("https://us1.unwiredlabs.com/v2/process.php", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(body)
+        });
+
+        if (!res.ok) throw new Error("Pieprasījums neizdevās");
+        const data = await res.json();
+        if (data.status !== "ok") throw new Error("Nav atrasta lokācija.");
+
+        const { lat, lon, accuracy, address, bearing } = data;
+        document.getElementById("result").innerText =
+          `Latitude: ${lat}
+Longitude: ${lon}
+Precizitāte: ${accuracy} m
+Adrese: ${address || "—"}
+Virziens: ${bearing || "nav zināms"}`;
+        document.getElementById("map").style.display = "block";
+
+        if (!map) {
+          map = L.map('map').setView([lat, lon], 16);
+          L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap'
+          }).addTo(map);
+        } else {
+          map.setView([lat, lon], 16);
+        }
+
+        if (marker) map.removeLayer(marker);
+        if (circle) map.removeLayer(circle);
+        if (arrow) map.removeLayer(arrow);
+
+        marker = L.marker([lat, lon]).addTo(map);
+
+        circle = L.circle([lat, lon], {
+          radius: accuracy,
+          color: "#25d366",
+          fillOpacity: 0.2
+        }).addTo(map);
+
+        if (bearing !== undefined && !isNaN(bearing)) {
+          const rad = bearing * Math.PI / 180;
+          const length = accuracy;
+          const destLat = lat + (length / 111111) * Math.cos(rad);
+          const destLon = lon + (length / (111111 * Math.cos(lat * Math.PI / 180))) * Math.sin(rad);
+          arrow = L.polyline([[lat, lon], [destLat, destLon]], {
+            color: 'red',
+            weight: 2,
+            dashArray: '4,4'
+          }).addTo(map);
+        }
+      } catch (e) {
+        document.getElementById("result").innerText = "Kļūda: " + e.message;
+      }
+    }
+
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("service-worker.js");
+    }
+  </script>
+</body>
+</html>
