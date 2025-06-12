@@ -1,11 +1,11 @@
-
 {
-  "name": "Torņu meklēšana",
+  "name": "Mobilo torņu meklēšana",
   "short_name": "Torņi",
-  "start_url": ".",
+  "start_url": "./index.html",
   "display": "standalone",
   "background_color": "#111b21",
   "theme_color": "#25d366",
+  "description": "Mobilo torņu atrašana pēc Cell ID",
   "icons": [
     {
       "src": "icon-192.png",

@@ -1,12 +1,16 @@
-
 <!DOCTYPE html>
 <html lang="lv">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Torņu meklēšana</title>
+  <title>Mobilo torņu meklēšana</title>
   <link rel="manifest" href="manifest.json" />
   <link rel="stylesheet" href="style.css" />
+  <link
+    rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    crossorigin=""
+  />
 </head>
 <body>
   <div id="login-screen" class="screen">
@@ -26,25 +30,27 @@
         <option value="lte" selected>4G (LTE)</option>
         <option value="nr">5G (NR)</option>
       </select>
+
       <label for="mcc">MCC (Valsts kods):</label>
       <input type="number" id="mcc" placeholder="piem. 247" />
+
       <label for="mnc">MNC (Operatora kods):</label>
       <input type="number" id="mnc" placeholder="piem. 1" />
+
       <label for="lac">LAC / TAC (zona):</label>
       <input type="number" id="lac" placeholder="piem. 30150" />
+
       <label for="cellid">Cell ID (Tornis):</label>
       <input type="number" id="cellid" placeholder="piem. 15883" />
+
       <button id="search-btn">Atrast torni</button>
+
       <div id="result"></div>
-      <div id="map" style="height:400px;"></div>
+      <div id="map"></div>
     </div>
   </div>
+
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script src="app.js"></script>
-  <script>
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js');
-    }
-  </script>
 </body>
 </html>
