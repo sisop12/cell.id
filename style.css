@@ -1,11 +1,10 @@
 
 body {
-  margin: 0;
-  font-family: Arial, sans-serif;
   background-color: #111b21;
   color: #e9edef;
+  font-family: "Segoe UI", sans-serif;
+  margin: 0;
 }
-
 .header {
   background-color: #202c33;
   padding: 16px;
@@ -13,36 +12,21 @@ body {
   font-weight: bold;
   color: #25d366;
 }
-
 .container {
   padding: 20px;
 }
-
 input, select, button {
   width: 100%;
-  padding: 10px;
   margin-top: 10px;
+  padding: 10px;
+  border-radius: 6px;
   border: none;
-  border-radius: 5px;
-  font-size: 16px;
 }
-
 button {
   background-color: #25d366;
   color: #111b21;
   font-weight: bold;
 }
-
-#error {
+.error {
   color: red;
-}
-
-#map {
-  height: 300px;
-  margin-top: 20px;
-  border-radius: 8px;
-}
-
-.screen {
-  padding: 20px;
 }
